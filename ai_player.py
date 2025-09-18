@@ -4,9 +4,9 @@ import random
 import copy
 
 # Max time for iterative deepening search
-TIME_LIMIT = 2.0
+TIME_LIMIT = 1.0
 
-# Global constants for storing game background
+# Global constants for storing game state
 
 # A dictionary with all valid location names of positions on the board (used for populating game board)
 VALID_SPACES = [
@@ -68,18 +68,17 @@ MILLS = [
 ]
 
 # Flag for immediate mode evaluation (possible mills on next move)
-IMMEDIATE_MODE = False
+# IMMEDIATE_MODE = False
 
 
 # USED FOR DEBUGGING TO SEPARATE TEXT FILE TO NOT CONFUSE REFEREE WITH STDOUT
-# def log_debug(message):
-#     with open("debug.txt", "a") as f:
-#         f.write(message + "\n")
+def log_debug(message):
+    with open("debug.txt", "a") as f:
+        f.write(message + "\n")
 
 
-#* @brief Initialize the base state of the game, with an empty board and full hands
-#*
-#* @return Initial state of the game
+# Initialize the base state of the game, with an empty board and full hands
+# Return initial state of the game
 def initial_state():
     state = {
         "board": {pos: None for pos in VALID_SPACES},
@@ -90,13 +89,8 @@ def initial_state():
     return state
 
 
-#* @brief Checks if the move will form a mill
-#*
-#* @param board current state of the board
-#* @param pos position of the move
-#* @param color color of the player
-#*
-#* @return boolean value indicating if the move forms a mill
+# Checks if the move will form a mill
+# Returns boolean value indicating if the move forms a mill
 def forms_mill(board, pos, color):
     for mill in MILLS:
         if pos in mill:
@@ -106,13 +100,8 @@ def forms_mill(board, pos, color):
     return False
 
 
-#* @brief Checks if a move will block an opponent's mill
-#*
-#* @param board current state of the board
-#* @param pos position of the move
-#* @param opp_color color of the opponent
-#*
-#* @return boolean value indicating if the move blocks the opponent's mill
+# Checks if a move will block an opponent's mill
+# Returns boolean value indicating if the move blocks the opponent's mill
 def blocks_mill(board, pos, opp_color):
     for mill in MILLS:
         if pos in mill:
@@ -124,12 +113,8 @@ def blocks_mill(board, pos, opp_color):
     return False
 
 
-#* @brief Lists all of the opponent's pieces that can be legally removed when player scores a mill
-#*
-#* @param state current state of the game
-#* @param opponent_color color of the opponent
-#*
-#* @return list of all opponent pieces that can be legally removed
+# Lists all of the opponent's pieces that can be legally removed when player scores a mill
+# Returns list of all opponent pieces that can be legally removed
 def get_mill_removals(state, opponent_color):
     board = state["board"]
     candidates = [pos for pos, occ in board.items() if occ == opponent_color and not forms_mill(board, pos, opponent_color)]
@@ -138,39 +123,24 @@ def get_mill_removals(state, opponent_color):
     return [pos for pos, occ in board.items() if occ == opponent_color]
 
 
-#* @brief Creates a deep copy of the given game state to test out moves without affecting the real game
-#*
-#* @param state current state of the game
-#*
-#* @return copy of given game state
+# Creates a deep copy of the given game state to test out moves without affecting the real game
+# Returns a copy of given game state
 def copy_state(state):
     return copy.deepcopy(state)
 
 
-#* @brief Changes the state of the game between player turns
-#*
-#* @param state current state of the game
-#*
-#* @return void
+# Changes the state of the game between player turns
 def change_turn(state):
     state["turn"] = "blue" if state["turn"] == "orange" else "orange"
 
 
-#* @brief Counts the number of pieces of a given color on the board, used for determining game win/loss
-#*
-#* @param state current state of the game
-#* @param color color of the player
-#*
-#* @return number of pieces the player has
+# Counts the number of pieces of a given color on the board, used for determining game win/loss
+# Returns number of pieces the player has
 def count_board_pieces(state, color):
     return sum(1 for occ in state["board"].values() if occ == color)
 
-#* @brief Generates all possible moves the given player can make
-#*
-#* @param state current state of the game
-#* @param color color of the player
-#*
-#* @return list of all possible moves that the player can make
+# Generates all possible moves the given player can make
+# Returns list of all possible moves that the player can make
 def generate_moves(state, color):
     moves = []
     board = state["board"]
@@ -190,7 +160,7 @@ def generate_moves(state, color):
                     for rem in removals:
                         moves.append(("h", pos, rem))
                 else:
-                    moves.append(("h", pos, "r0"))
+                    moves.append(("h", pos, "r"))
     
     # Possible moves from adjacent moves
     player_positions = [pos for pos, occ in board.items() if occ == color]
@@ -209,17 +179,13 @@ def generate_moves(state, color):
                 for rem in removals:
                     moves.append((src, dest, rem))
             else:
-                moves.append((src, dest, "r0"))
+                moves.append((src, dest, "r"))
                 
     return moves
 
 
-#* @brief Applies a given move, and returns the game state after the move is applied
-#*
-#* @param state current state of the game
-#* @param move tuple of the form (source, dest, removal)
-#*
-#* @return the new state of the game after the move is applied
+# Applies a given move, and returns the game state after the move is applied
+# Returns the new state of the game after the move is applied
 def apply_move(state, move):
     new_state = copy_state(state)
     board = new_state["board"]
@@ -239,7 +205,7 @@ def apply_move(state, move):
         if forms_mill(board, dest, color):
             mill_formed = True
 
-    if mill_formed and removal != "r0":
+    if mill_formed and removal != "r":
         board[removal] = None
         new_state["mill_counter"] = 0
     else:
@@ -251,11 +217,8 @@ def apply_move(state, move):
     return new_state
 
 
-#* @brief Checks if the current game state is terminal (no legal moves, a player has less than 3 pieces, or stalemate)
-#*
-#* @param state current state of the game
-#*
-#* @return boolean value indicating if the game is over
+# Checks if the current game state is terminal (no legal moves, a player has less than 3 pieces, or stalemate)
+# Returns boolean value indicating if the game is over
 def is_terminal(state):
     for color in ["blue", "orange"]:
         if count_board_pieces(state, color) + state["hand"][color] < 3:
@@ -263,18 +226,22 @@ def is_terminal(state):
     if not generate_moves(state, state["turn"]):
         return True
     if state["mill_counter"] >= 20:
+        # print("Stalemate reached!")
         return True
     return False
 
-#* @brief Uses a series of heuristics to evaluate the value of the current game state
-#*
-#* @param state current state of the game
-#* @param player color of the player
-#* @param is_root boolean value to determine if the current state is the root
-#*
-#* @return the heuristic value of the current game state
-def evaluate(state, player, is_root):
-    global IMMEDIATE_MODE
+# Used specifically for the Flask app, this function is not needed when running this program alone in the terminal
+def is_terminal_frontend(state):
+    for color in ["blue", "orange"]:
+        if count_board_pieces(state, color) + state["hand"][color] <= 3:
+            return True
+    if state["mill_counter"] >= 20:
+        return True
+    return False
+
+# Uses a series of heuristics to evaluate the value of the current game state
+# Returns the heuristic value of the current game state
+def evaluate(state, player, immediate):
     opponent = "blue" if player == "orange" else "orange"
     board = state["board"]
     move_played = state["move_played"]
@@ -287,7 +254,7 @@ def evaluate(state, player, is_root):
             return 10000 # we win the game
         return 0
     
-    if IMMEDIATE_MODE:
+    if immediate:
         if forms_mill(board, move_played, player):
             score += 5000 # we form a mill on our next turn
         
@@ -310,29 +277,21 @@ def evaluate(state, player, is_root):
     return score
 
 
-#* @brief Minimax algorithm using alpha-beta pruning to find the best move at a given depth
-#*
-#* @param state current state of the game
-#* @param depth depth of the search tree
-#* @param alpha alpha value for pruning
-#* @param beta beta value for pruning
-#* @param maximizing_player boolean value to determine if the player is maximizing
-#* @param player color of the player
-#* @param start_time time the search started
-#* @param is_root boolean value to determine if the current state is the root
-#*
-#* @return the value of the best move found by the algorithm and the move itself
-def alphabeta(state, depth, alpha, beta, maximizing_player, player, start_time, is_root=False):
+# Minimax algorithm using alpha-beta pruning to find the best move at a given depth
+# Returns the value of the best move found by the algorithm and the move itself
+def alphabeta(state, depth, alpha, beta, maximizing_player, player, start_time, from_root):
     if time.time() - start_time > TIME_LIMIT * 0.95: # save 5% of our move time for final calculations
-        return evaluate(state, player, is_root), None
+        return evaluate(state, player, immediate=(from_root==1)), None
 
     if depth == 0 or is_terminal(state):
-        return evaluate(state, player, is_root), None
+        return evaluate(state, player, immediate=(from_root==1)), None
 
-    if is_root:
-        legal_moves = generate_moves(state, player)
-    else:
-        legal_moves = generate_moves(state, state["turn"])
+    # if is_root:
+    #     legal_moves = generate_moves(state, player)
+    # else:
+    #     legal_moves = generate_moves(state, state["turn"])
+
+    legal_moves = generate_moves(state, player) if from_root == 0 else generate_moves(state, state["turn"])
 
     best_move = None
 
@@ -340,7 +299,7 @@ def alphabeta(state, depth, alpha, beta, maximizing_player, player, start_time, 
         value = -float('inf')
         for move in legal_moves:
             child = apply_move(state, move)
-            child_value, _ = alphabeta(child, depth - 1, alpha, beta, False, player, start_time)
+            child_value, _ = alphabeta(child, depth - 1, alpha, beta, False, player, start_time, from_root+1)
             if child_value > value:
                 value = child_value
                 best_move = move
@@ -352,7 +311,7 @@ def alphabeta(state, depth, alpha, beta, maximizing_player, player, start_time, 
         value = float('inf')
         for move in legal_moves:
             child = apply_move(state, move)
-            child_value, _ = alphabeta(child, depth - 1, alpha, beta, True, player, start_time)
+            child_value, _ = alphabeta(child, depth - 1, alpha, beta, True, player, start_time, from_root+1)
             if child_value < value:
                 value = child_value
                 best_move = move
@@ -361,37 +320,26 @@ def alphabeta(state, depth, alpha, beta, maximizing_player, player, start_time, 
                 break  # Alpha cutoff.
         return value, best_move
 
-#* @brief Continuously runs the minimax algorithm with alpha-beta pruning at iterating depths until time is up
-#*
-#* @param state current state of the game
-#* @param player color of the player
-#*
-#* @return the best move found by the algorithm
+# Continuously runs the minimax algorithm with alpha-beta pruning at iterating depths until time is up
+# Returns the best move found by the algorithm
 def iterative_deepening(state, player):
-    global IMMEDIATE_MODE
-    IMMEDIATE_MODE = True # global variable to track whether we are searching the immediate next move (to check for possible mills/mill blocks)
     start_time = time.time()
     best_move = None
     depth = 1
     while True:
         if time.time() - start_time > TIME_LIMIT * 0.9:
             break
-        value, move = alphabeta(state, depth, -float('inf'), float('inf'), True, player, start_time, is_root=True)
+        value, move = alphabeta(state, depth, -float('inf'), float('inf'), True, player, start_time, from_root=0)
         if time.time() - start_time > TIME_LIMIT * 0.9:
             break
         if move is not None:
             best_move = move
         depth += 1
-        IMMEDIATE_MODE = False
     return best_move
 
 
-#* @brief Converts a move from string form to tuple form
-#*
-#* @param string representation of the move
-#* @param player_color color of the player
-#*
-#* @return tuple of the move in the form (source, dest, removal)
+# Converts a move from string form to tuple form
+# Returns tuple of the move in the form (source, dest, removal)
 def parse_move(move_str):
     parts = move_str.strip().split()
     if len(parts) != 3:
@@ -399,58 +347,66 @@ def parse_move(move_str):
     return tuple(parts) 
 
 
-#* @brief Converts a move from tuple form to string form
-#*
-#* @param move tuple of the form (source, dest, removal)
-#* @param player_color color of the player
-#*
-#* @return string representation of the move
+# Converts a move from tuple form to string form
+# Returns string representation of the move
 def move_to_string(move, player_color):
     source, dest, removal = move
     if source == "h":
         source = "h1" if player_color == "blue" else "h2"
     return f"{source} {dest} {removal}"
 
-def main():
-    # Read initial color
-    player_color = input().strip().lower()
+# UNCOMMENT FOR USE WITHOUT FLASK APP/WEB FRONTEND PLAYING IN THE TERMINAL "python lasker_morris_player.py"
+# First, enter the color (blue to go first, orange to go second)
+# To play, enter in moves in the following format: source destination removal
+# The board is a 7x7, with the vertical axis being labeled by numbers 1-7 and the horizontal axis being labeled with letters a-g
+# Source can be either from hand ("h1" or "h2" depending on blue or orange respectively) OR from a location already on the board (use the board coordinate, ie. "a1" "f2" "d5" etc)
+# Destination is a board coordinate that is not currently occupied (enter as "a1" "f2" "d5" etc)
+# Removal is used when your move will get a mill, if your move does not get a mill leave this as "r0", and if it does score a mill enter the board coordinate of the opponent piece to remove
+# A full valid move may look like "h1 a4 r0" or "g7 g4 b6"
+
+# def main():
+#     # Read initial color
+#     print("Enter the AI player's color:")
+#     player_color = input().strip().lower()
+#     # log_debug(player_color)
     
-    state = initial_state()
-    state["turn"] = "blue" 
+#     state = initial_state()
+#     state["turn"] = "blue" 
     
-    # Blue makes the first move
-    if player_color == "blue":
-        move = iterative_deepening(state, player_color)
-        if move is None:
-            sys.exit("No valid move found")
-        state = apply_move(state, move)
+#     # Blue makes the first move
+#     if player_color == "blue":
+#         move = iterative_deepening(state, player_color)
+#         if move is None:
+#             sys.exit("No valid move found")
+#         state = apply_move(state, move)
 
-        print(move_to_string(move, player_color), flush=True)
+#         print(move_to_string(move, player_color), flush=True)
     
-    # Main loop
-    while True:
-        try:
-            game_input = input().strip()
-            if game_input.startswith("END"):
-                break
+#     # Main loop
+#     while True:
+#         try:
+#             print("Enter your move:")
+#             game_input = input().strip()
+#             if game_input.startswith("END"):
+#                 break
 
-            opp_move = parse_move(game_input)
-            state = apply_move(state, opp_move)
+#             opp_move = parse_move(game_input)
+#             state = apply_move(state, opp_move)
 
-            if is_terminal(state):
-                break
+#             if is_terminal(state):
+#                 break
 
-            move = iterative_deepening(state, player_color)
-            if move is None:
-                break
-            state = apply_move(state, move)
-            print(move_to_string(move, player_color), flush=True)
+#             move = iterative_deepening(state, player_color)
+#             if move is None:
+#                 break
+#             state = apply_move(state, move)
+#             print(move_to_string(move, player_color), flush=True)
 
-            if is_terminal(state):
-                break
+#             if is_terminal(state):
+#                 break
 
-        except EOFError:
-            break
+#         except EOFError:
+#             break
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

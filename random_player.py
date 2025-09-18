@@ -4,7 +4,7 @@ import random
 import copy
 
 
-TIME_LIMIT = 2.0
+TIME_LIMIT = 1.0
 
 
 VALID_SPACES = [
@@ -181,6 +181,7 @@ def is_terminal(state):
         return True
     return False
 
+# The main difference from the smart player
 def get_random_move(state, player):
     legal_moves = generate_moves(state, state["turn"])
     if not legal_moves:
@@ -200,46 +201,46 @@ def move_to_string(move, player_color):
     return f"{source} {dest} {removal}"
 
 
-def main():
-    player_color = input().strip().lower()
-    opponent_color = "blue" if player_color == "orange" else "orange"
+# def main():
+#     player_color = input().strip().lower()
+#     opponent_color = "blue" if player_color == "orange" else "orange"
     
-    state = initial_state()
-    state["turn"] = "blue" 
+#     state = initial_state()
+#     state["turn"] = "blue" 
     
-    if player_color == "blue":
-        move = get_random_move(state, player_color)
-        if move is None:
-            sys.exit("No valid move found")
-        state = apply_move(state, move)
-        log_debug("Our move: {} and color {}".format(move, player_color))
-        print(move_to_string(move, player_color), flush=True)
-        log_debug("Our move: {} and color {}".format(move_to_string(move, player_color), player_color))
+#     if player_color == "blue":
+#         move = get_random_move(state, player_color)
+#         if move is None:
+#             sys.exit("No valid move found")
+#         state = apply_move(state, move)
+#         log_debug("Our move: {} and color {}".format(move, player_color))
+#         print(move_to_string(move, player_color), flush=True)
+#         log_debug("Our move: {} and color {}".format(move_to_string(move, player_color), player_color))
     
-    while True:
-        try:
-            game_input = input().strip()
-            log_debug("TEST RANDOM {} game input: {}".format(player_color, game_input))
-            if game_input.startswith("END"):
-                break
+#     while True:
+#         try:
+#             game_input = input().strip()
+#             log_debug("TEST RANDOM {} game input: {}".format(player_color, game_input))
+#             if game_input.startswith("END"):
+#                 break
 
-            opp_move = parse_move(game_input)
-            state = apply_move(state, opp_move)
+#             opp_move = parse_move(game_input)
+#             state = apply_move(state, opp_move)
 
-            if is_terminal(state):
-                break
+#             if is_terminal(state):
+#                 break
 
-            move = get_random_move(state, player_color)
-            if move is None:
-                break
-            state = apply_move(state, move)
-            print(move_to_string(move, player_color), flush=True)
+#             move = get_random_move(state, player_color)
+#             if move is None:
+#                 break
+#             state = apply_move(state, move)
+#             print(move_to_string(move, player_color), flush=True)
 
-            if is_terminal(state):
-                break
+#             if is_terminal(state):
+#                 break
 
-        except EOFError:
-            break
+#         except EOFError:
+#             break
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
